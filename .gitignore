@@ -1,0 +1,52 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Logs / dados locais
+logs/*
+!logs/.gitkeep
+*.log
+*.db
+*.sqlite3
+
+# Testes / cobertura
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Type checkers / linters
+.mypy_cache/
+.dmypy.json
+.ruff_cache/
+.pyre/
+.pytype/
+
+# IDE/Editor settings
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Enunciado da prova
+*.pdf
+
+# git keep
+!**/.gitkeep

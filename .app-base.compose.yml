@@ -1,0 +1,30 @@
+services:
+  app-base:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    mem_limit: 2G
+    stop_grace_period: 10s
+    logging:
+      options:
+        max-size: 100m
+        max-file: 5
+        compress: "true"
+    depends_on:
+      postgres-erp-api:
+        condition: service_healthy
+      redis-erp-api:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      - TZ=America/Sao_Paulo
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:${APP_PORT:-8000}/health_check"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

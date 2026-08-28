@@ -1,0 +1,41 @@
+# Hidden files/dir in root
+.*
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# Configs
+.env
+
+# Virtual environment
+env
+venv
+
+# Tests
+tests
+coverage
+cover
+htmlcov
+tox.ini
+
+# Scripts
+scripts
+
+# Content Folders
+logs/**/*
+
+# Project stuff
+build
+README.md
+*.pdf
+
+# Other
+**/__pycache__
+**/.DS_Store
+**/*.egg-info
+**/*.pyc
+**/*.log
+**/*.egg
+**/*.db
+**/*.pid

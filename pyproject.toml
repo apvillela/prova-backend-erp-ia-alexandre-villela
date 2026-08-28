@@ -1,0 +1,118 @@
+[build-system]
+requires = ['setuptools>=65.0', 'wheel']
+build-backend = 'setuptools.build_meta'
+
+[project]
+authors = [{ name = "Alexandre Villela" }]
+name = "erp_api"
+description = "API do módulo de Produtos e Estoque de um ERP - prova prática Back-end vA"
+requires-python = ">=3.11"
+classifiers = [
+  "Typing :: Typed",
+  "Framework :: FastAPI",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+]
+dynamic = ["version", "readme"]
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic>=2",
+  "pydantic-settings",
+  "sqlalchemy[asyncio]",
+  "asyncpg",
+  "alembic",
+  "redis",
+  "arq",
+  "pyjwt",
+  "bcrypt",
+  "httpx",
+]
+
+[dependency-groups]
+lint = ["black", "ruff", "mypy>=0.94"]
+test = [
+  "pytest",
+  "pytest-asyncio",
+  "pytest-cov",
+  "pytest-mock",
+  "python-dotenv",
+]
+dev = ["tox", "tox-uv", { include-group = "lint" }, { include-group = "test" }]
+
+[tool.setuptools.dynamic]
+version = { attr = "erp_api.version.VERSION" }
+readme = { file = "README.md" }
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+erp_api = ["py.typed"]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.black]
+line-length = 100
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+strict = true
+show_error_codes = true
+show_column_numbers = true
+exclude = "venv|.venv|.tox|migrations"
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]
+precision = 2
+
+[tool.ruff]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
+lint.select = [
+  "A",   # flake8-builtins
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "C4",  # flake8-comprehensions
+  "B",   # flake8-bugbear
+  "N",   # pep8-naming
+  "C90", # mccabe
+  "S",   # flake8-bandit
+  "T20", # flake8-print
+  "ERA", # eradicate
+  "RUF", # Ruff-specific rules
+  "TRY", # tryceratops
+  "D",   # pydocstyle
+  "I",   # isort
+]
+lint.ignore = [
+  "D1",   # pydocstyle: missing docstrings
+  "D203", # pydocstyle: one-blank-line-before-class
+  "D213", # pydocstyle: multi-line-summary-second-line
+  "D401", # pydocstyle: non-imperative-mood
+]
+line-length = 100
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["erp_api"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]     # Use of `assert`
+"__init__.py" = ["F401"] # imported but unused
+
+[tool.ruff.lint.pep8-naming]
+# Allow Pydantic's `@field_validator` decorator to trigger class method treatment.
+classmethod-decorators = [
+  "classmethod",
+  "pydantic.field_validator",
+  "pydantic.model_validator",
+]

@@ -1,0 +1,73 @@
+services:
+  app-1:
+    image: erp_api:${COMPOSE_APP_1_IMAGE_VERSION:-latest}
+    extends:
+      file: .app-base.compose.yml
+      service: app-base
+    ports:
+      - ${COMPOSE_APP_1_PORTS:-8000}:${APP_PORT:-8000}
+    volumes:
+      - ${COMPOSE_APP_1_MAP_LOGS_DIR:-./logs}:/app/logs
+
+  # Migrações rodam num container próprio, antes da API subir: com N réplicas da
+  # aplicação, migrar no lifespan faria todas correrem para o mesmo lock.
+  migrate:
+    image: erp_api:${COMPOSE_APP_1_IMAGE_VERSION:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      - TZ=America/Sao_Paulo
+    depends_on:
+      postgres-erp-api:
+        condition: service_healthy
+
+  postgres-erp-api:
+    image: postgres:${COMPOSE_POSTGRES_IMAGE_VERSION:-16-alpine}
+    restart: always
+    stop_grace_period: 10s
+    command: -p ${POSTGRES_PORT:-5432}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-erp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASS:-erp}
+      POSTGRES_DB: ${POSTGRES_DB:-erp}
+      TZ: America/Sao_Paulo
+    ports:
+      - ${COMPOSE_POSTGRES_PORTS:-127.0.0.1:5432}:${POSTGRES_PORT:-5432}
+    volumes:
+      - postgres_erp_api_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-erp} -d ${POSTGRES_DB:-erp} -p ${POSTGRES_PORT:-5432}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-erp-api:
+    image: redis:${COMPOSE_REDIS_IMAGE_VERSION:-7-alpine}
+    restart: always
+    stop_grace_period: 10s
+    command:
+      - redis-server
+      - --port ${REDIS_PORT:-6379}
+      - --appendonly yes
+      - --maxmemory 512mb
+      - --maxmemory-policy allkeys-lru
+    environment:
+      - TZ=America/Sao_Paulo
+    ports:
+      - ${COMPOSE_REDIS_PORTS:-127.0.0.1:6379}:${REDIS_PORT:-6379}
+    volumes:
+      - redis_erp_api_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "${REDIS_PORT:-6379}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_erp_api_data:
+  redis_erp_api_data:
