@@ -22,6 +22,9 @@ tox.ini
 # Scripts
 scripts
 
+# Frontend (tem Dockerfile próprio)
+frontend
+
 # Content Folders
 logs/**/*
 

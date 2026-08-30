@@ -9,6 +9,21 @@ services:
     volumes:
       - ${COMPOSE_APP_1_MAP_LOGS_DIR:-./logs}:/app/logs
 
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+    ports:
+      - ${FRONTEND_PORT:-3000}:80
+    depends_on:
+      app-1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
   worker:
     image: erp_api:${COMPOSE_APP_1_IMAGE_VERSION:-latest}
     extends:
