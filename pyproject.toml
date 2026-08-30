@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-lint = ["black", "ruff", "mypy>=0.94"]
+lint = ["black", "ruff", "mypy>=0.94", "asyncpg-stubs"]
 test = [
   "pytest",
   "pytest-asyncio",

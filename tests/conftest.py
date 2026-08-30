@@ -35,6 +35,13 @@ def avoid_request_communication(mocker: MockerFixture) -> None:
     mocker.patch("httpx.AsyncHTTPTransport.__aenter__", new=async_fail)
 
 
+@pytest.fixture
+def auth_headers() -> dict[str, str]:
+    from erp_api.authentication import create_access_token
+
+    return {"Authorization": f"Bearer {create_access_token('tester')}"}
+
+
 @pytest_asyncio.fixture
 async def client() -> AsyncIterator[AsyncClient]:
     """Client ASGI da aplicação (não sobe o lifespan, então não toca Postgres/Redis)."""
