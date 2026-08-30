@@ -82,11 +82,11 @@ export function Painel({ readiness }: { readiness: Readiness | null }) {
       </p>
       <Bastidores
         passos={[
-          "O botão faz POST /alertas/estoque-baixo/verificar (com o token JWT no header).",
-          "A API não consulta nada na hora: só enfileira um job na fila arq, que vive no Redis, e responde 202 Accepted — por isso o resultado não é imediato.",
-          "O rate limit é um contador INCR+EXPIRE no Redis por usuário: estourou o limite na janela, a API responde 429 com Retry-After.",
-          "O worker (outro container) pega o job, roda um SELECT no Postgres por produtos abaixo do limite e grava o alerta numa lista no Redis.",
-          "Esta tela relê GET /alertas/estoque-baixo, que lê direto dessa lista no Redis — sem tocar no Postgres.",
+          "O botão faz POST /alertas/estoque-baixo/verificar com o token JWT no header.",
+          "A API só enfileira um job na fila arq (Redis) e responde 202 — por isso o resultado não é imediato.",
+          "Rate limit por usuário via INCR+EXPIRE no Redis: passou do limite na janela, a API responde 429 com Retry-After.",
+          "O worker, em outro container, pega o job, busca no Postgres os produtos abaixo do limite e grava o alerta numa lista no Redis.",
+          "Esta tela relê GET /alertas/estoque-baixo, que lê essa lista direto do Redis, sem tocar no Postgres.",
           "O card 'fila de tarefas' vem de GET /health/readiness, que checa Postgres, Redis e o heartbeat do worker.",
         ]}
       />
@@ -276,11 +276,11 @@ export function Produtos() {
       </p>
       <Bastidores
         passos={[
-          "Cada operação aqui vira uma chamada REST autenticada: POST/PATCH/DELETE em /produtos gravam no PostgreSQL via SQLAlchemy async.",
-          "A listagem (GET /produtos) primeiro tenta o Redis: a chave inclui filtros, ordenação e página, com TTL de 30s.",
-          "Ordenar pelos cabeçalhos manda ordenar_por/ordem na query string, e o banco resolve com ORDER BY — não é ordenação no navegador.",
-          "Qualquer escrita invalida o cache inteiro de produtos de uma vez, bumpando um número de versão no Redis (as chaves velhas expiram sozinhas).",
-          "A validação (nome, preço, estoque ≥ 0) roda no Pydantic antes de chegar ao banco; nome duplicado vira 409 vindo da constraint UNIQUE.",
+          "POST/PATCH/DELETE em /produtos gravam no PostgreSQL via SQLAlchemy async.",
+          "A listagem (GET /produtos) primeiro tenta o Redis: a chave de cache inclui filtros, ordenação e página, com TTL de 30s.",
+          "Ordenar pelos cabeçalhos manda ordenar_por/ordem na query string e o banco resolve com ORDER BY; não é ordenação no navegador.",
+          "Qualquer escrita bumpa um número de versão no Redis, invalidando o cache de produtos inteiro; as chaves velhas expiram pelo TTL.",
+          "Validação (nome, preço, estoque ≥ 0) roda no Pydantic antes do banco; nome duplicado vira 409 pela constraint UNIQUE.",
         ]}
       />
       <form className="linha-form" onSubmit={salvar}>
@@ -478,11 +478,11 @@ export function Agente() {
       </p>
       <Bastidores
         passos={[
-          "A pergunta vai em POST /agente/perguntar e cai num interpretador determinístico (regras e regex) — nenhum LLM é chamado.",
-          "O interpretador escolhe uma ferramenta estruturada (ex.: listar por faixa de preço, contar produtos) e extrai os parâmetros do texto, com um grau de confiança.",
-          "A ferramenta roda uma consulta parametrizada no PostgreSQL — a pergunta nunca vira SQL diretamente, então não há injeção via linguagem natural.",
-          "A resposta devolve a ferramenta escolhida, os parâmetros e o resultado cru — é isso que aparece na caixa de tradução abaixo.",
-          "Para usar um modelo real, só a camada de interpretação seria trocada; as ferramentas e consultas continuam as mesmas.",
+          "A pergunta vai em POST /agente/perguntar e cai num interpretador determinístico de regras e regex; nenhum LLM é chamado.",
+          "O interpretador escolhe uma ferramenta estruturada (listar por faixa de preço, contar produtos...) e extrai os parâmetros do texto, com um grau de confiança.",
+          "A ferramenta roda uma consulta parametrizada no PostgreSQL; a pergunta nunca vira SQL diretamente.",
+          "A resposta traz a ferramenta escolhida, os parâmetros e o resultado cru: é o que aparece na caixa de tradução abaixo.",
+          "Para usar um modelo real, troca-se só a camada de interpretação; ferramentas e consultas continuam as mesmas.",
         ]}
       />
       <form
@@ -591,10 +591,10 @@ export function Resumo() {
       </p>
       <Bastidores
         passos={[
-          "GET /resumo/{cliente_id}?produto_id=X dispara as três fontes ao mesmo tempo com asyncio.gather — o tempo total é o da fonte mais lenta, não a soma.",
+          "GET /resumo/{cliente_id}?produto_id=X dispara as três fontes ao mesmo tempo com asyncio.gather: o tempo total é o da fonte mais lenta, não a soma.",
           "Financeiro e cliente são módulos externos simulados, com latência aleatória e falha proposital de vez em quando; estoque lê o Postgres de verdade.",
-          "Cada fonte tem timeout individual e retry com backoff exponencial — uma fonte lenta não trava as outras.",
-          "Se uma fonte esgota as tentativas, a resposta vem 'parcial': só aquele cartão fica indisponível, com o erro e o número de tentativas.",
+          "Cada fonte tem timeout individual e retry com backoff exponencial, então uma fonte lenta não trava as outras.",
+          "Se uma fonte esgota as tentativas, a resposta vem parcial: só aquele cartão fica indisponível, com o erro e o número de tentativas.",
         ]}
       />
       <form className="linha-form" onSubmit={consultar}>
