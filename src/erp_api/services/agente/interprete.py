@@ -1,0 +1,74 @@
+import re
+import unicodedata
+
+from erp_api.services.agente.schemas import ChamadaFerramenta
+
+_NUMERO = r"(\d+(?:[.,]\d+)?)"
+
+
+def _normalizar(texto: str) -> str:
+    sem_acentos = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
+    return sem_acentos.lower().strip()
+
+
+def _numero(valor: str) -> float:
+    return float(valor.replace(",", "."))
+
+
+def interpretar(pergunta: str) -> ChamadaFerramenta | None:
+    """NLU determinístico por regras; num LLM real, esta é a única camada substituída."""
+    texto = _normalizar(pergunta)
+
+    if m := re.search(rf"estoque\s+(?:abaixo|menor)\s+(?:de|que)\s+{_NUMERO}", texto):
+        return ChamadaFerramenta(
+            ferramenta="consultar_estoque_baixo",
+            parametros={"limite": int(_numero(m.group(1)))},
+            confianca=0.95,
+        )
+
+    if m := re.search(rf"menos\s+(?:de|que)\s+{_NUMERO}\s+unidades?", texto):
+        return ChamadaFerramenta(
+            ferramenta="consultar_estoque_baixo",
+            parametros={"limite": int(_numero(m.group(1)))},
+            confianca=0.9,
+        )
+
+    if re.search(r"estoque\s+baixo|acabando|repor", texto):
+        return ChamadaFerramenta(ferramenta="consultar_estoque_baixo", parametros={}, confianca=0.8)
+
+    if re.search(r"quantos\s+produtos|total\s+de\s+produtos", texto):
+        return ChamadaFerramenta(ferramenta="contar_produtos", parametros={}, confianca=0.95)
+
+    if m := re.search(rf"entre\s+{_NUMERO}\s+e\s+{_NUMERO}", texto):
+        return ChamadaFerramenta(
+            ferramenta="buscar_produtos",
+            parametros={"preco_min": _numero(m.group(1)), "preco_max": _numero(m.group(2))},
+            confianca=0.9,
+        )
+
+    if m := re.search(rf"(?:mais\s+barat\w+|abaixo)\s+(?:de|que)\s+(?:r\$\s*)?{_NUMERO}", texto):
+        return ChamadaFerramenta(
+            ferramenta="buscar_produtos",
+            parametros={"preco_max": _numero(m.group(1))},
+            confianca=0.85,
+        )
+
+    if m := re.search(rf"(?:mais\s+car\w+|acima)\s+(?:de|que)\s+(?:r\$\s*)?{_NUMERO}", texto):
+        return ChamadaFerramenta(
+            ferramenta="buscar_produtos",
+            parametros={"preco_min": _numero(m.group(1))},
+            confianca=0.85,
+        )
+
+    if m := re.search(
+        r"(?:preco\s+d[oea]s?|quanto\s+custa[m]?|busca?r?|procur\w+|listar?)\s+(?:o\s|a\s|os\s|as\s)?(.+)",
+        texto,
+    ):
+        termo = m.group(1).strip(" ?!.")
+        termo = re.sub(r"^produtos?\s*", "", termo).strip()
+        if termo:
+            return ChamadaFerramenta(
+                ferramenta="buscar_produtos", parametros={"nome": termo}, confianca=0.7
+            )
+
+    return None
