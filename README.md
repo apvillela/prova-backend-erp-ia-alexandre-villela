@@ -88,7 +88,13 @@ Como não tenho experiência prévia em Go, me organizaria pra aprender com entr
 
 ## Uso de IA
 
-<!-- TODO(alexandre): descrever o que foi gerado/apoiado por IA e o que foi escrito/revisado manualmente -->
+Utilizei IA do início ao fim do processo, como ferramenta de desenvolvimento — as decisões são minhas. Como a prova é uma tarefa tecnicamente já resolvida, o meu trabalho foi a arquitetura e o system design: a escolha das libs (SQLAlchemy async, arq em vez de Celery, uv), o desenho do sistema de fila, se o retry do `/resumo` teria backoff exponencial e quais retornos valiam nova tentativa (a classificação de erros retentáveis — 408/425/429/5xx sim, demais 4xx não — saiu dessas decisões), a estratégia de invalidação de cache por versão de namespace, o rate limit fail-open. A partir dessas decisões a IA gerou boa parte do código, e eu revisei toda decisão importante e a maior parte dos módulos antes de commitar.
+
+No front-end usei IA para o desenvolvimento, com feedback visual meu a cada iteração e ajustes com base no que seria a melhor experiência dentro do tempo que tive.
+
+As mecânicas de teste e a pipeline de CI eu montei junto com a primeira versão do template, justamente pra garantir que nada gerado dali em diante entrasse quebrando: todo commit passa por lint, type check e pelos testes de regressão que fui adicionando a cada parte (schemas, retry do resumo, cache, interpretador do agente). A IA também me serviu de memória de consulta pra relembrar trechos de O Programador Pragmático e Designing Data-Intensive Applications nas partes em que tinha dúvida sobre melhores práticas.
+
+Nas respostas teóricas deste README o fluxo foi o inverso do código: as respostas partem do meu raciocínio e das decisões que tomei durante a prova, e pedi pra IA enriquecê-las com os exemplos reais do repositório — apontar em qual arquivo cada decisão está materializada e conferir que nada afirmado aqui divergia do que foi implementado — e melhorar a clareza do que escrevi, mantendo o meu jeito de escrever.
 
 
 ## Extras
