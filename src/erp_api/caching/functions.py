@@ -41,6 +41,25 @@ async def set_cached(namespace: str, key: str, value: str, ttl: float) -> None:
         log.warning(f"Cache indisponível na escrita ({type(e).__name__}); seguindo sem cache")
 
 
+async def hit_rate_limit(key: str, max_hits: int, window_s: int) -> int | None:
+    """Janela fixa via INCR+EXPIRE; retorna segundos até liberar quando estoura o limite.
+
+    Se o Redis estiver fora, não limita (fail-open): o endpoint continua funcionando.
+    """
+    full_key = f"ratelimit:{key}"
+    try:
+        redis = get_redis_async_client()
+        hits = await redis.incr(full_key)
+        if hits == 1:
+            await redis.expire(full_key, window_s)
+        if hits > max_hits:
+            ttl = await redis.ttl(full_key)
+            return max(int(ttl), 1)
+    except (RedisError, OSError) as e:
+        log.warning(f"Rate limit indisponível ({type(e).__name__}); seguindo sem limitar")
+    return None
+
+
 async def invalidate_namespace(namespace: str) -> None:
     """Invalidação por versão: escrever bumpa a versão e as chaves antigas expiram pelo TTL.
 

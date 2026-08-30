@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     # - Cache -
     cache_ttl_produtos: float = 30
 
+    # - Rate limit -
+    rate_limit_verificar_max: PositiveInt = 3
+    rate_limit_verificar_janela: PositiveInt = 60
+
     # - Auth -
     auth_username: str = "lidertecnica"
     auth_password: SecretStr = SecretStr("password123!")
