@@ -98,6 +98,17 @@ services:
       timeout: 5s
       retries: 5
 
+  # Opcional (docker compose --profile llm up): LLM local pro agente.
+  # Depois de subir: docker compose exec ollama ollama pull llama3.2:1b
+  # e defina AGENTE_LLM_URL=http://ollama:11434 no .env.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["llm"]
+    restart: always
+    volumes:
+      - ollama_data:/root/.ollama
+
 volumes:
   postgres_erp_api_data:
   redis_erp_api_data:
+  ollama_data:

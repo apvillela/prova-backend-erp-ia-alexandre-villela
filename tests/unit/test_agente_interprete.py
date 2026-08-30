@@ -1,6 +1,7 @@
 import pytest
 
 from erp_api.services.agente.interprete import interpretar
+from erp_api.services.agente.interprete_llm import parsear_chamada
 
 
 @pytest.mark.parametrize(
@@ -44,3 +45,25 @@ def test_interpreta_perguntas(
 
 def test_pergunta_fora_do_dominio_retorna_none() -> None:
     assert interpretar("qual a previsão do tempo amanhã?") is None
+
+
+@pytest.mark.parametrize(
+    ("conteudo", "esperado"),
+    [
+        ('{"ferramenta": "contar_produtos", "parametros": {}}', "contar_produtos"),
+        ('{"ferramenta": "buscar_produtos", "parametros": {"nome": "cabo"}}', "buscar_produtos"),
+        ('{"ferramenta": null}', None),
+        ('{"ferramenta": "dropar_tabela", "parametros": {}}', None),  # fora do registry
+        ('{"ferramenta": "contar_produtos", "parametros": "x"}', None),  # parâmetros inválidos
+        ("não é json", None),
+        ('["lista"]', None),
+    ],
+)
+def test_parsear_chamada_llm(conteudo: str, esperado: str | None) -> None:
+    chamada = parsear_chamada(conteudo)
+
+    if esperado is None:
+        assert chamada is None
+    else:
+        assert chamada is not None
+        assert chamada.ferramenta == esperado

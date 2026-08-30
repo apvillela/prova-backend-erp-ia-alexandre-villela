@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     # - Estoque -
     estoque_baixo_limite: PositiveInt = 10
 
+    # - Agente (LLM local opcional; vazio = só regras) -
+    agente_llm_url: str = ""
+    agente_llm_modelo: str = "llama3.2:1b"
+    agente_llm_timeout: float = 8.0
+
     # - Cache -
     cache_ttl_produtos: float = 30
 

@@ -20,3 +20,4 @@ class RespostaAgente(BaseModel):
     confianca: float
     resultado: Any
     mensagem: str
+    interprete: str = "regras"  # llm | regras | nenhum

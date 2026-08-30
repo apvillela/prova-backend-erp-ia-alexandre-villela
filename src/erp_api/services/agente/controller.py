@@ -2,9 +2,13 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from erp_api import config
 from erp_api.services.agente.ferramentas import FERRAMENTAS
 from erp_api.services.agente.interprete import interpretar
-from erp_api.services.agente.schemas import RespostaAgente
+from erp_api.services.agente.interprete_llm import interpretar_llm
+from erp_api.services.agente.schemas import ChamadaFerramenta, RespostaAgente
+
+settings = config.get_settings()
 
 log = logging.getLogger(__name__)
 
@@ -14,8 +18,20 @@ MENSAGEM_NAO_ENTENDIDA = (
 )
 
 
-async def perguntar(session: AsyncSession, pergunta: str) -> RespostaAgente:
+async def _interpretar(pergunta: str) -> tuple[ChamadaFerramenta | None, str]:
+    """LLM local primeiro (quando configurado), regras como fallback — nunca o contrário:
+    se o LLM cair, o agente continua respondendo com o interpretador determinístico.
+    """  # noqa: D205
+    if settings.agente_llm_url:
+        chamada = await interpretar_llm(pergunta)
+        if chamada is not None:
+            return chamada, "llm"
     chamada = interpretar(pergunta)
+    return chamada, "regras" if chamada else "nenhum"
+
+
+async def perguntar(session: AsyncSession, pergunta: str) -> RespostaAgente:
+    chamada, interprete = await _interpretar(pergunta)
 
     if chamada is None:
         return RespostaAgente(
@@ -25,6 +41,7 @@ async def perguntar(session: AsyncSession, pergunta: str) -> RespostaAgente:
             confianca=0.0,
             resultado=None,
             mensagem=MENSAGEM_NAO_ENTENDIDA,
+            interprete=interprete,
         )
 
     _, executor = FERRAMENTAS[chamada.ferramenta]
@@ -32,7 +49,7 @@ async def perguntar(session: AsyncSession, pergunta: str) -> RespostaAgente:
 
     log.info(
         f"Agente: '{pergunta}' -> {chamada.ferramenta}({chamada.parametros}) "
-        f"[confiança {chamada.confianca}]"
+        f"[confiança {chamada.confianca}, via {interprete}]"
     )
 
     return RespostaAgente(
@@ -42,4 +59,5 @@ async def perguntar(session: AsyncSession, pergunta: str) -> RespostaAgente:
         confianca=chamada.confianca,
         resultado=resultado,
         mensagem="ok",
+        interprete=interprete,
     )
