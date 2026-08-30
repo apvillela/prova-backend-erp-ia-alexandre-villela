@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from erp_api import config as api_config
 from erp_api.database import Base
+from erp_api.services.produtos import models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -19,6 +20,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Metadata dos models: habilita `alembic revision --autogenerate`.
+# Os imports de models existem só para registrá-los no metadata.
 target_metadata = Base.metadata
 
 # URL vem do .env (Settings) para não duplicar nem versionar credenciais no alembic.ini.
