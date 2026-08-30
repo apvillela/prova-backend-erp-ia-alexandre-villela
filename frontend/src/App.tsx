@@ -58,7 +58,7 @@ function Login({ aoEntrar }: { aoEntrar: () => void }) {
           </button>
         </form>
         {erro && <p className="erro-form">{erro}</p>}
-        <p className="aviso">credenciais padrão do .env: admin / admin</p>
+        <p className="aviso">credenciais padrão do .env: lidertecnica / password123!</p>
         </div>
       </div>
     </div>

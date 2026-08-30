@@ -55,8 +55,8 @@ class Settings(BaseSettings):
     cache_ttl_produtos: float = 30
 
     # - Auth -
-    auth_username: str = "admin"
-    auth_password: SecretStr = SecretStr("admin")
+    auth_username: str = "lidertecnica"
+    auth_password: SecretStr = SecretStr("password123!")
     jwt_secret: SecretStr = SecretStr("change-me")
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: PositiveInt = 60
