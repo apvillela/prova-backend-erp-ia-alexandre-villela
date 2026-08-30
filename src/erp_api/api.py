@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from erp_api.services.alertas.router import router as alertas_router
 from erp_api.services.auth.router import router as auth_router
+from erp_api.services.consolidado.router import router as consolidado_router
 from erp_api.services.health.router import router as health_router
 from erp_api.services.produtos.router import router as produtos_router
 
@@ -38,3 +39,4 @@ router.include_router(health_router, prefix="/health", tags=["health"])
 router.include_router(auth_router, prefix="/auth", tags=["auth"])
 router.include_router(produtos_router, prefix="/produtos", tags=["produtos"])
 router.include_router(alertas_router, prefix="/alertas", tags=["alertas"])
+router.include_router(consolidado_router, prefix="/consolidado", tags=["consolidado"])

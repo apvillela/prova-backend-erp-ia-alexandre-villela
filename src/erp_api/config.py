@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     redis_pass: SecretStr | None = None
     redis_db: int = 0
 
+    # - Consolidado (Q4: fontes simuladas) -
+    consolidado_timeout: float = 1.0
+    consolidado_tentativas: PositiveInt = 2
+    consolidado_latencia_simulada: tuple[float, float] = (0.05, 0.3)
+
     # - Estoque -
     estoque_baixo_limite: PositiveInt = 10
 
