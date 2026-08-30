@@ -23,8 +23,6 @@ async def cache() -> AsyncIterator[None]:
 
     await client.flushdb()
     yield
-    await client.aclose()
-    caching.client.get_redis_async_client.cache_clear()
 
 
 async def _entry_keys(redis: Any) -> list[str]:

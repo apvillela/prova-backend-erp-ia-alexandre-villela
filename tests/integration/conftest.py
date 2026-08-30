@@ -6,12 +6,24 @@ import pytest_asyncio
 
 from erp_api import config
 from erp_api import database as db
+from erp_api.caching import client as caching_client
 from erp_api.database import Base
 from erp_api.services.produtos import models
 
 settings = config.get_settings()
 
 assert models.Produto.__tablename__ == "produtos"
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _reset_redis_client() -> AsyncIterator[None]:
+    """Descarta o singleton do Redis: o client fica preso ao event loop do teste anterior."""
+    yield
+    try:
+        await caching_client.get_redis_async_client().aclose()
+    except Exception:  # noqa: S110
+        pass
+    caching_client.get_redis_async_client.cache_clear()
 
 
 @pytest_asyncio.fixture
