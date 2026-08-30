@@ -10,9 +10,7 @@ async def test_readiness_com_dependencias_ok(client: AsyncClient, mocker: Mocker
     mocker.patch("erp_api.services.health.controller.database.check_connection")
     redis = mocker.AsyncMock()
     redis.get.return_value = "heartbeat"
-    mocker.patch(
-        "erp_api.services.health.controller.get_redis_async_client", return_value=redis
-    )
+    mocker.patch("erp_api.services.health.controller.get_redis_async_client", return_value=redis)
 
     response = await client.get("/health/readiness")
 

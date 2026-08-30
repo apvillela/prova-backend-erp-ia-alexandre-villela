@@ -29,9 +29,7 @@ async def _check_cache() -> ComponentStatus:
 
 async def _check_worker() -> ComponentStatus:
     try:
-        heartbeat = await get_redis_async_client().get(
-            default_queue_name + health_check_key_suffix
-        )
+        heartbeat = await get_redis_async_client().get(default_queue_name + health_check_key_suffix)
     except Exception as e:
         log.warning(f"Redis indisponível para checar worker: {e}")
         return ComponentStatus(healthy=False, detail=type(e).__name__)
