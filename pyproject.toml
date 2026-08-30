@@ -27,7 +27,6 @@ dependencies = [
   "arq",
   "prometheus-fastapi-instrumentator",
   "pyjwt",
-  "bcrypt",
   "httpx",
 ]
 
