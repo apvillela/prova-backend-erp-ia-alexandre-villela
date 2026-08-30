@@ -78,6 +78,9 @@ async def listar(session: AsyncSession, filtros: ProdutoFilters) -> ProdutosPage
 
     total = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
 
+    if filtros.ordenar_por is not None:
+        coluna = getattr(Produto, filtros.ordenar_por.value)
+        query = query.order_by(coluna.desc() if filtros.ordem == "desc" else coluna.asc())
     query = query.order_by(Produto.id).offset((filtros.page - 1) * filtros.size).limit(filtros.size)
     produtos = (await session.scalars(query)).all()
 

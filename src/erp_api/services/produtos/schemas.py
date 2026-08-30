@@ -1,7 +1,15 @@
 from datetime import datetime
 from decimal import Decimal
+from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class ProdutoOrdenacao(StrEnum):
+    NOME = "nome"
+    ESTOQUE = "quantidade_em_estoque"
+    ATUALIZACAO = "data_atualizacao"
 
 
 class ProdutoBase(BaseModel):
@@ -45,6 +53,8 @@ class ProdutoFilters(BaseModel):
     preco_min: Decimal | None = Field(default=None, ge=0)
     preco_max: Decimal | None = Field(default=None, ge=0)
     estoque_abaixo_de: int | None = Field(default=None, ge=0)
+    ordenar_por: ProdutoOrdenacao | None = None
+    ordem: Literal["asc", "desc"] = "asc"
     page: int = Field(default=1, ge=1)
     size: int = Field(default=20, ge=1, le=100)
 
