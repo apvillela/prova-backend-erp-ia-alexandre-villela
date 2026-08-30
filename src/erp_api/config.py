@@ -41,6 +41,16 @@ class Settings(BaseSettings):
     redis_pass: SecretStr | None = None
     redis_db: int = 0
 
+    # - Auth -
+    auth_username: str = "admin"
+    auth_password: SecretStr = SecretStr("admin")
+    jwt_secret: SecretStr = SecretStr("change-me")
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: PositiveInt = 60
+
+    # - Metrics -
+    metrics_enabled: bool = True
+
     # - CORS -
     cors_origins: list[str] = ["*"]
 

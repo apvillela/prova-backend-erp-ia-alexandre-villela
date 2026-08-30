@@ -7,6 +7,7 @@ import erp_api
 from erp_api import api, config
 from erp_api.exceptions import register_exception_handlers
 from erp_api.lifespan import lifespan
+from erp_api.metrics import setup_metrics
 from erp_api.middlewares import RequestContextMiddleware
 
 log = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ app = FastAPI(
 )
 
 register_exception_handlers(app)
+setup_metrics(app)
 
 app.add_middleware(
     CORSMiddleware,
