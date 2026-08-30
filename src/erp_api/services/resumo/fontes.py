@@ -8,6 +8,15 @@ from erp_api import config
 settings = config.get_settings()
 
 
+class FonteError(Exception):
+    """Falha HTTP de uma fonte, com o status necessário para decidir entre retry e aborto."""
+
+    def __init__(self, status_code: int, retry_after: float | None = None) -> None:
+        super().__init__(f"HTTP {status_code}")
+        self.status_code = status_code
+        self.retry_after = retry_after
+
+
 async def _latencia() -> None:
     await asyncio.sleep(random.uniform(*settings.resumo_latencia_simulada))  # noqa: S311
 

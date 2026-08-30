@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     resumo_timeout: float = 1.0
     resumo_tentativas: PositiveInt = 2
     resumo_latencia_simulada: tuple[float, float] = (0.05, 0.3)
+    resumo_backoff_base: float = 0.2
+    resumo_backoff_teto: float = 2.0
 
     # - Estoque -
     estoque_baixo_limite: PositiveInt = 10
