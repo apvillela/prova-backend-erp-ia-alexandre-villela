@@ -10,3 +10,4 @@ class ReadinessStatus(BaseModel):
     ready: bool
     postgres: ComponentStatus
     redis: ComponentStatus
+    worker: ComponentStatus

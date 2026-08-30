@@ -8,9 +8,10 @@ pytest_plugins = ("pytest_asyncio",)
 @pytest.mark.asyncio
 async def test_readiness_com_dependencias_ok(client: AsyncClient, mocker: MockerFixture) -> None:
     mocker.patch("erp_api.services.health.controller.database.check_connection")
+    redis = mocker.AsyncMock()
+    redis.get.return_value = "heartbeat"
     mocker.patch(
-        "erp_api.services.health.controller.get_redis_async_client",
-        return_value=mocker.AsyncMock(),
+        "erp_api.services.health.controller.get_redis_async_client", return_value=redis
     )
 
     response = await client.get("/health/readiness")
@@ -20,6 +21,7 @@ async def test_readiness_com_dependencias_ok(client: AsyncClient, mocker: Mocker
         "ready": True,
         "postgres": {"healthy": True, "detail": None},
         "redis": {"healthy": True, "detail": None},
+        "worker": {"healthy": True, "detail": None},
     }
 
 
