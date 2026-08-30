@@ -15,6 +15,22 @@ def _numero(valor: str) -> float:
     return float(valor.replace(",", "."))
 
 
+def _interpretar_historico(texto: str) -> ChamadaFerramenta:
+    """Após a palavra-chave, descarta ligações ("de movimentações", "de estoque"); o que
+    sobrar depois de "do/da/dos/das" é o nome do produto.
+    """  # noqa: D205
+    resto = re.sub(r"^.*?(?:historico|movimentac\w+)\s*", "", texto)
+    resto = re.sub(r"^(?:(?:de\s+)?(?:movimentac\w+|estoque)\s*)*", "", resto)
+    termo = ""
+    if m := re.match(r"d[oea]s?\s+(.+)", resto):
+        termo = m.group(1).strip(" ?!.")
+    return ChamadaFerramenta(
+        ferramenta="historico_movimentacoes",
+        parametros={"produto": termo} if termo else {},
+        confianca=0.9,
+    )
+
+
 def interpretar(pergunta: str) -> ChamadaFerramenta | None:
     """NLU determinístico por regras; num LLM real, esta é a única camada substituída."""
     texto = _normalizar(pergunta)
@@ -39,6 +55,9 @@ def interpretar(pergunta: str) -> ChamadaFerramenta | None:
     if re.search(r"quantos\s+produtos|total\s+de\s+produtos", texto):
         return ChamadaFerramenta(ferramenta="contar_produtos", parametros={}, confianca=0.95)
 
+    if re.search(r"historico|movimentac", texto):
+        return _interpretar_historico(texto)
+
     if m := re.search(rf"entre\s+{_NUMERO}\s+e\s+{_NUMERO}", texto):
         return ChamadaFerramenta(
             ferramenta="buscar_produtos",
@@ -60,15 +79,20 @@ def interpretar(pergunta: str) -> ChamadaFerramenta | None:
             confianca=0.85,
         )
 
-    if m := re.search(
+    return _interpretar_busca_por_nome(texto)
+
+
+def _interpretar_busca_por_nome(texto: str) -> ChamadaFerramenta | None:
+    m = re.search(
         r"(?:preco\s+d[oea]s?|quanto\s+custa[m]?|busca?r?|procur\w+|listar?)\s+(?:o\s|a\s|os\s|as\s)?(.+)",
         texto,
-    ):
-        termo = m.group(1).strip(" ?!.")
-        termo = re.sub(r"^produtos?\s*", "", termo).strip()
-        if termo:
-            return ChamadaFerramenta(
-                ferramenta="buscar_produtos", parametros={"nome": termo}, confianca=0.7
-            )
-
-    return None
+    )
+    if m is None:
+        return None
+    termo = m.group(1).strip(" ?!.")
+    termo = re.sub(r"^produtos?\s*", "", termo).strip()
+    if not termo:
+        return None
+    return ChamadaFerramenta(
+        ferramenta="buscar_produtos", parametros={"nome": termo}, confianca=0.7
+    )

@@ -60,4 +60,9 @@ async def test_lista_ferramentas_expostas(
 
     assert resposta.status_code == 200
     nomes = {f["nome"] for f in resposta.json()}
-    assert nomes == {"consultar_estoque_baixo", "buscar_produtos", "contar_produtos"}
+    assert nomes == {
+        "consultar_estoque_baixo",
+        "buscar_produtos",
+        "contar_produtos",
+        "historico_movimentacoes",
+    }

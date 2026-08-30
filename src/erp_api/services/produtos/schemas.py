@@ -64,3 +64,22 @@ class ProdutosPage(BaseModel):
     total: int
     page: int
     size: int
+
+
+class MovimentacaoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    produto_id: int
+    tipo: Literal["entrada", "saida"]
+    quantidade: int
+    quantidade_resultante: int
+    usuario: str
+    criado_em: datetime
+
+
+class MovimentacoesPage(BaseModel):
+    items: list[MovimentacaoResponse]
+    total: int
+    page: int
+    size: int

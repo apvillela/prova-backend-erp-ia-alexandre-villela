@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from erp_api import config
-from erp_api.services.produtos.models import Produto
+from erp_api.services.produtos.models import MovimentacaoEstoque, Produto
 
 settings = config.get_settings()
 
@@ -60,6 +60,27 @@ async def _contar_produtos(session: AsyncSession, params: dict[str, Any]) -> Any
     return {"total": total}
 
 
+async def _historico_movimentacoes(session: AsyncSession, params: dict[str, Any]) -> Any:
+    query = select(MovimentacaoEstoque, Produto.nome).join(Produto)
+    if nome := params.get("produto"):
+        query = query.where(Produto.nome.ilike(f"%{nome}%"))
+    query = query.order_by(MovimentacaoEstoque.id.desc()).limit(20)
+    linhas = (await session.execute(query)).all()
+    return {
+        "movimentacoes": [
+            {
+                "produto": nome_produto,
+                "tipo": m.tipo,
+                "quantidade": m.quantidade,
+                "quantidade_resultante": m.quantidade_resultante,
+                "usuario": m.usuario,
+                "criado_em": m.criado_em.isoformat(),
+            }
+            for m, nome_produto in linhas
+        ]
+    }
+
+
 FERRAMENTAS: dict[str, tuple[Ferramenta, Executor]] = {
     "consultar_estoque_baixo": (
         Ferramenta(
@@ -88,5 +109,14 @@ FERRAMENTAS: dict[str, tuple[Ferramenta, Executor]] = {
             parametros={},
         ),
         _contar_produtos,
+    ),
+    "historico_movimentacoes": (
+        Ferramenta(
+            nome="historico_movimentacoes",
+            descricao="Lista as últimas movimentações de estoque (entradas e saídas), "
+            "opcionalmente filtradas por nome de produto",
+            parametros={"produto": {"type": "string", "required": False}},
+        ),
+        _historico_movimentacoes,
     ),
 }

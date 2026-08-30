@@ -23,6 +23,12 @@ from erp_api.services.agente.interprete import interpretar
         ("produtos acima de 900", "buscar_produtos", {"preco_min": 900.0}),
         ("qual o preço do teclado?", "buscar_produtos", {"nome": "teclado"}),
         ("buscar monitor", "buscar_produtos", {"nome": "monitor"}),
+        (
+            "qual o histórico de movimentações do teclado?",
+            "historico_movimentacoes",
+            {"produto": "teclado"},
+        ),
+        ("movimentações de estoque", "historico_movimentacoes", {}),
     ],
 )
 def test_interpreta_perguntas(
