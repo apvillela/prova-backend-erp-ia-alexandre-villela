@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, getToken, Readiness, setToken } from "./api";
 import { Agente, Consolidado, Painel, Produtos } from "./paginas";
+import header from "../assets/header.png";
+import logo from "../assets/ipm_logo.jpeg";
 
 const ABAS = ["painel", "produtos", "agente", "consolidado"] as const;
 type Aba = (typeof ABAS)[number];
@@ -32,6 +34,8 @@ function Login({ aoEntrar }: { aoEntrar: () => void }) {
   return (
     <div className="tela-login">
       <div className="cartao-login">
+        <img className="banner-login" src={header} alt="IPM — Transformando o futuro de cidades e pessoas" />
+        <div className="conteudo">
         <h1>Produtos & Estoque</h1>
         <p className="subtitulo" style={{ marginBottom: 0 }}>
           Console de operação do módulo de ERP.
@@ -55,6 +59,7 @@ function Login({ aoEntrar }: { aoEntrar: () => void }) {
         </form>
         {erro && <p className="erro-form">{erro}</p>}
         <p className="aviso">credenciais padrão do .env: admin / admin</p>
+        </div>
       </div>
     </div>
   );
@@ -105,8 +110,11 @@ export default function App() {
     <>
       <header className="trilho">
         <div className="marca">
-          Produtos & Estoque
-          <small>módulo erp · console de operação</small>
+          <img className="logo-ipm" src={logo} alt="IPM" />
+          <span>
+            Produtos & Estoque
+            <small>módulo erp · console de operação</small>
+          </span>
         </div>
         <TagServico nome="api" saudavel={apiViva} />
         <TagServico nome="postgres" saudavel={readiness?.postgres.healthy ?? null} />

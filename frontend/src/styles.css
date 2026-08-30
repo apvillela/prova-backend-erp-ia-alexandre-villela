@@ -1,10 +1,12 @@
 :root {
-  --fundo: #10140f;
-  --superficie: #181d16;
-  --superficie-2: #1f2619;
-  --linha: #2a3326;
-  --tinta: #e9ede2;
-  --tinta-fraca: #8b9683;
+  --fundo: #171113;
+  --superficie: #1f1719;
+  --superficie-2: #291d1f;
+  --linha: #38282a;
+  --tinta: #f0e9e7;
+  --tinta-fraca: #9c8b88;
+  --marca: #f13a30;
+  --marca-escura: #7c221d;
   --ambar: #e8a33d;
   --ambar-escuro: #7a5211;
   --ok: #6fbf8e;
@@ -45,7 +47,17 @@ body {
   flex-wrap: wrap;
 }
 
+.logo-ipm {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: block;
+}
+
 .marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-weight: 700;
   font-size: 17px;
   letter-spacing: -0.02em;
@@ -152,8 +164,8 @@ body {
 }
 
 .aba.ativa {
-  color: var(--ambar);
-  border-bottom-color: var(--ambar);
+  color: var(--marca);
+  border-bottom-color: var(--marca);
 }
 
 main {
@@ -242,7 +254,7 @@ select {
 input:focus,
 select:focus,
 button:focus-visible {
-  outline: 2px solid var(--ambar);
+  outline: 2px solid var(--marca);
   outline-offset: 1px;
 }
 
@@ -255,9 +267,9 @@ input::placeholder {
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--fundo);
-  background: var(--ambar);
-  border: 1px solid var(--ambar);
+  color: #fff;
+  background: var(--marca);
+  border: 1px solid var(--marca);
   padding: 9px 16px;
   cursor: pointer;
 }
@@ -272,7 +284,7 @@ input::placeholder {
 }
 
 .botao.vazado {
-  color: var(--ambar);
+  color: var(--marca);
   background: transparent;
 }
 
@@ -393,15 +405,15 @@ input::placeholder {
 }
 
 .chip:hover {
-  color: var(--ambar);
-  border-color: var(--ambar-escuro);
+  color: var(--marca);
+  border-color: var(--marca-escura);
 }
 
 .traducao {
   font-family: var(--mono);
   font-size: 13px;
-  border: 1px solid var(--ambar-escuro);
-  border-left: 3px solid var(--ambar);
+  border: 1px solid var(--marca-escura);
+  border-left: 3px solid var(--marca);
   background: var(--superficie);
   padding: 12px 14px;
   margin-bottom: 14px;
@@ -469,10 +481,21 @@ pre.resultado {
 
 .cartao-login {
   width: 100%;
-  max-width: 360px;
+  max-width: 420px;
   border: 1px solid var(--linha);
   background: var(--superficie);
-  padding: 32px 28px;
+  padding: 0 0 28px;
+  overflow: hidden;
+}
+
+.banner-login {
+  display: block;
+  width: 100%;
+  border-bottom: 1px solid var(--linha);
+}
+
+.cartao-login .conteudo {
+  padding: 24px 28px 0;
 }
 
 .cartao-login h1 {
