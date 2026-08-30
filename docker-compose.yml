@@ -47,7 +47,9 @@ services:
     command: ["alembic", "upgrade", "head"]
     restart: "no"
     env_file:
-      - .env
+      - path: .env.example
+      - path: .env
+        required: false
     environment:
       - TZ=America/Sao_Paulo
     depends_on:

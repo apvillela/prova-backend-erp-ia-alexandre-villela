@@ -21,7 +21,9 @@ services:
     environment:
       - TZ=America/Sao_Paulo
     env_file:
-      - .env
+      - path: .env.example
+      - path: .env
+        required: false
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:${APP_PORT:-8000}/health_check"]
       interval: 15s
