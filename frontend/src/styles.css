@@ -557,3 +557,115 @@ pre.resultado {
     overflow-x: auto;
   }
 }
+
+/* ---- cabeçalho ordenável ---- */
+
+.th-ordenar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.th-ordenar:hover {
+  color: var(--tinta);
+}
+
+.th-ordenar:focus-visible {
+  outline: 1px solid var(--marca);
+  outline-offset: 2px;
+}
+
+.seta-ordem {
+  opacity: 0.4;
+}
+
+.tabela th[aria-sort] .th-ordenar {
+  color: var(--tinta);
+}
+
+.tabela th[aria-sort] .seta-ordem {
+  opacity: 1;
+  color: var(--marca);
+}
+
+/* ---- por baixo dos panos ---- */
+
+.bastidores {
+  border: 1px solid var(--linha);
+  background: var(--superficie);
+  font-family: var(--mono);
+  margin: 0 0 16px;
+}
+
+.bastidores summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 9px 12px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tinta-fraca);
+  user-select: none;
+}
+
+.bastidores summary::-webkit-details-marker {
+  display: none;
+}
+
+.bastidores summary::before {
+  content: "▸";
+  color: var(--marca);
+  margin-right: 8px;
+}
+
+.bastidores[open] summary::before {
+  content: "▾";
+}
+
+.bastidores summary:hover {
+  color: var(--tinta);
+}
+
+.bastidores ol {
+  margin: 0;
+  padding: 2px 16px 14px 34px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--tinta-fraca);
+}
+
+.bastidores li + li {
+  margin-top: 6px;
+}
+
+.bastidores li::marker {
+  color: var(--marca);
+}
+
+/* ---- campo com rótulo ---- */
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.campo-rotulo {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tinta-fraca);
+}
+
+.linha-form:has(.campo) {
+  align-items: flex-end;
+}

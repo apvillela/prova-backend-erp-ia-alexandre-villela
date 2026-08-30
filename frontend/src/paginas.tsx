@@ -19,6 +19,19 @@ function useErro(): [string, (e: unknown) => void, () => void] {
   ];
 }
 
+function Bastidores({ passos }: { passos: string[] }) {
+  return (
+    <details className="bastidores">
+      <summary>por baixo dos panos</summary>
+      <ol>
+        {passos.map((p) => (
+          <li key={p}>{p}</li>
+        ))}
+      </ol>
+    </details>
+  );
+}
+
 /* ---------------- Painel ---------------- */
 
 export function Painel({ readiness }: { readiness: Readiness | null }) {
@@ -67,6 +80,16 @@ export function Painel({ readiness }: { readiness: Readiness | null }) {
         Estado dos serviços e do estoque. O worker verifica o estoque a cada 5 minutos; a
         verificação também pode ser enfileirada agora.
       </p>
+      <Bastidores
+        passos={[
+          "O botão faz POST /alertas/estoque-baixo/verificar (com o token JWT no header).",
+          "A API não consulta nada na hora: só enfileira um job na fila arq, que vive no Redis, e responde 202 Accepted — por isso o resultado não é imediato.",
+          "O rate limit é um contador INCR+EXPIRE no Redis por usuário: estourou o limite na janela, a API responde 429 com Retry-After.",
+          "O worker (outro container) pega o job, roda um SELECT no Postgres por produtos abaixo do limite e grava o alerta numa lista no Redis.",
+          "Esta tela relê GET /alertas/estoque-baixo, que lê direto dessa lista no Redis — sem tocar no Postgres.",
+          "O card 'fila de tarefas' vem de GET /health/readiness, que checa Postgres, Redis e o heartbeat do worker.",
+        ]}
+      />
       {erro && <p className="mensagem erro-msg">{erro}</p>}
       <div className="grade">
         <div className="cartao">
@@ -132,11 +155,41 @@ export function Painel({ readiness }: { readiness: Readiness | null }) {
 
 const FORM_VAZIO = { nome: "", preco: "", quantidade_em_estoque: "" };
 
+type CampoOrdenacao = "nome" | "quantidade_em_estoque" | "data_atualizacao";
+
+function ThOrdenavel({
+  campo,
+  atual,
+  ordem,
+  onOrdenar,
+  className,
+  children,
+}: {
+  campo: CampoOrdenacao;
+  atual: CampoOrdenacao | null;
+  ordem: "asc" | "desc";
+  onOrdenar: (campo: CampoOrdenacao) => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const ativo = atual === campo;
+  return (
+    <th className={className} aria-sort={ativo ? (ordem === "asc" ? "ascending" : "descending") : undefined}>
+      <button type="button" className="th-ordenar" onClick={() => onOrdenar(campo)}>
+        {children}
+        <span className="seta-ordem">{ativo ? (ordem === "asc" ? "↑" : "↓") : "↕"}</span>
+      </button>
+    </th>
+  );
+}
+
 export function Produtos() {
   const [pagina, setPagina] = useState<ProdutosPage | null>(null);
   const [filtroNome, setFiltroNome] = useState("");
   const [soEstoqueBaixo, setSoEstoqueBaixo] = useState(false);
   const [numeroPagina, setNumeroPagina] = useState(1);
+  const [ordenarPor, setOrdenarPor] = useState<CampoOrdenacao | null>(null);
+  const [ordem, setOrdem] = useState<"asc" | "desc">("asc");
   const [form, setForm] = useState(FORM_VAZIO);
   const [editando, setEditando] = useState<number | null>(null);
   const [erro, capturar, limpar] = useErro();
@@ -145,6 +198,10 @@ export function Produtos() {
     const params = new URLSearchParams({ page: String(numeroPagina), size: "10" });
     if (filtroNome) params.set("nome", filtroNome);
     if (soEstoqueBaixo) params.set("estoque_abaixo_de", "10");
+    if (ordenarPor) {
+      params.set("ordenar_por", ordenarPor);
+      params.set("ordem", ordem);
+    }
     try {
       setPagina(await api<ProdutosPage>(`/produtos?${params}`));
       limpar();
@@ -152,7 +209,17 @@ export function Produtos() {
       capturar(e);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [numeroPagina, filtroNome, soEstoqueBaixo]);
+  }, [numeroPagina, filtroNome, soEstoqueBaixo, ordenarPor, ordem]);
+
+  function ordenar(campo: CampoOrdenacao) {
+    setNumeroPagina(1);
+    if (ordenarPor === campo) {
+      setOrdem((o) => (o === "asc" ? "desc" : "asc"));
+    } else {
+      setOrdenarPor(campo);
+      setOrdem("asc");
+    }
+  }
 
   useEffect(() => {
     carregar();
@@ -207,6 +274,15 @@ export function Produtos() {
         CRUD sobre PostgreSQL com leitura cacheada no Redis. A barra indica o nível de estoque;
         abaixo de 10 unidades o item entra no alerta do worker.
       </p>
+      <Bastidores
+        passos={[
+          "Cada operação aqui vira uma chamada REST autenticada: POST/PATCH/DELETE em /produtos gravam no PostgreSQL via SQLAlchemy async.",
+          "A listagem (GET /produtos) primeiro tenta o Redis: a chave inclui filtros, ordenação e página, com TTL de 30s.",
+          "Ordenar pelos cabeçalhos manda ordenar_por/ordem na query string, e o banco resolve com ORDER BY — não é ordenação no navegador.",
+          "Qualquer escrita invalida o cache inteiro de produtos de uma vez, bumpando um número de versão no Redis (as chaves velhas expiram sozinhas).",
+          "A validação (nome, preço, estoque ≥ 0) roda no Pydantic antes de chegar ao banco; nome duplicado vira 409 vindo da constraint UNIQUE.",
+        ]}
+      />
       <form className="linha-form" onSubmit={salvar}>
         <input
           placeholder="nome"
@@ -268,10 +344,27 @@ export function Produtos() {
       <table className="tabela">
         <thead>
           <tr>
-            <th>nome</th>
+            <ThOrdenavel campo="nome" atual={ordenarPor} ordem={ordem} onOrdenar={ordenar}>
+              nome
+            </ThOrdenavel>
             <th className="num">preço</th>
-            <th>estoque</th>
-            <th className="num">atualizado</th>
+            <ThOrdenavel
+              campo="quantidade_em_estoque"
+              atual={ordenarPor}
+              ordem={ordem}
+              onOrdenar={ordenar}
+            >
+              estoque
+            </ThOrdenavel>
+            <ThOrdenavel
+              campo="data_atualizacao"
+              atual={ordenarPor}
+              ordem={ordem}
+              onOrdenar={ordenar}
+              className="num"
+            >
+              atualizado
+            </ThOrdenavel>
             <th />
           </tr>
         </thead>
@@ -293,7 +386,15 @@ export function Produtos() {
                 />
                 {p.quantidade_em_estoque}
               </td>
-              <td className="num">{new Date(p.data_atualizacao).toLocaleDateString("pt-BR")}</td>
+              <td className="num">
+                {new Date(p.data_atualizacao).toLocaleString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </td>
               <td>
                 <div className="acoes-linha">
                   <button onClick={() => editar(p)}>editar</button>
@@ -375,6 +476,15 @@ export function Agente() {
         consulta no banco. Sem LLM externo; a camada de interpretação é o único ponto a trocar por
         um modelo real.
       </p>
+      <Bastidores
+        passos={[
+          "A pergunta vai em POST /agente/perguntar e cai num interpretador determinístico (regras e regex) — nenhum LLM é chamado.",
+          "O interpretador escolhe uma ferramenta estruturada (ex.: listar por faixa de preço, contar produtos) e extrai os parâmetros do texto, com um grau de confiança.",
+          "A ferramenta roda uma consulta parametrizada no PostgreSQL — a pergunta nunca vira SQL diretamente, então não há injeção via linguagem natural.",
+          "A resposta devolve a ferramenta escolhida, os parâmetros e o resultado cru — é isso que aparece na caixa de tradução abaixo.",
+          "Para usar um modelo real, só a camada de interpretação seria trocada; as ferramentas e consultas continuam as mesmas.",
+        ]}
+      />
       <form
         className="linha-form"
         onSubmit={(e) => {
@@ -479,23 +589,35 @@ export function Resumo() {
         Consulta as três fontes (estoque, financeiro, cliente) em paralelo com asyncio.gather,
         timeout individual e retry. Se uma fonte falhar, a resposta degrada só naquele campo.
       </p>
+      <Bastidores
+        passos={[
+          "GET /resumo/{cliente_id}?produto_id=X dispara as três fontes ao mesmo tempo com asyncio.gather — o tempo total é o da fonte mais lenta, não a soma.",
+          "Financeiro e cliente são módulos externos simulados, com latência aleatória e falha proposital de vez em quando; estoque lê o Postgres de verdade.",
+          "Cada fonte tem timeout individual e retry com backoff exponencial — uma fonte lenta não trava as outras.",
+          "Se uma fonte esgota as tentativas, a resposta vem 'parcial': só aquele cartão fica indisponível, com o erro e o número de tentativas.",
+        ]}
+      />
       <form className="linha-form" onSubmit={consultar}>
-        <input
-          type="number"
-          min={1}
-          value={clienteId}
-          onChange={(e) => setClienteId(e.target.value)}
-          style={{ width: 130 }}
-          aria-label="id do cliente"
-        />
-        <input
-          type="number"
-          min={1}
-          value={produtoId}
-          onChange={(e) => setProdutoId(e.target.value)}
-          style={{ width: 130 }}
-          aria-label="id do produto"
-        />
+        <label className="campo">
+          <span className="campo-rotulo">id do cliente</span>
+          <input
+            type="number"
+            min={1}
+            value={clienteId}
+            onChange={(e) => setClienteId(e.target.value)}
+            style={{ width: 130 }}
+          />
+        </label>
+        <label className="campo">
+          <span className="campo-rotulo">id do produto</span>
+          <input
+            type="number"
+            min={1}
+            value={produtoId}
+            onChange={(e) => setProdutoId(e.target.value)}
+            style={{ width: 130 }}
+          />
+        </label>
         <button className="botao" disabled={carregando}>
           {carregando ? "Consultando…" : "Consultar fontes"}
         </button>
