@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from erp_api import config, database
 from erp_api.caching import close_redis_async_client, get_redis_async_client
+from erp_api.workers.queue import close_queue_pool
 
 settings = config.get_settings()
 
@@ -36,3 +37,4 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown
     await database.dispose_engine()
     await close_redis_async_client()
+    await close_queue_pool()

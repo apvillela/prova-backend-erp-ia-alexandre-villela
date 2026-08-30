@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     redis_pass: SecretStr | None = None
     redis_db: int = 0
 
+    # - Estoque -
+    estoque_baixo_limite: PositiveInt = 10
+
     # - Cache -
     cache_ttl_produtos: float = 30
 

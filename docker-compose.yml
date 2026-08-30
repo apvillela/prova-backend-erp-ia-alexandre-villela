@@ -9,6 +9,19 @@ services:
     volumes:
       - ${COMPOSE_APP_1_MAP_LOGS_DIR:-./logs}:/app/logs
 
+  worker:
+    image: erp_api:${COMPOSE_APP_1_IMAGE_VERSION:-latest}
+    extends:
+      file: .app-base.compose.yml
+      service: app-base
+    command: ["arq", "erp_api.workers.worker.WorkerSettings"]
+    healthcheck:
+      test: ["CMD", "arq", "--check", "erp_api.workers.worker.WorkerSettings"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
   # Migrações rodam num container próprio, antes da API subir: com N réplicas da
   # aplicação, migrar no lifespan faria todas correrem para o mesmo lock.
   migrate:

@@ -1,7 +1,6 @@
-from typing import Any, AsyncIterator
+from typing import Any
 
 import pytest
-import pytest_asyncio
 from httpx import AsyncClient
 from pytest_mock import MockerFixture
 from redis.exceptions import ConnectionError as RedisConnectionError
@@ -11,18 +10,6 @@ from erp_api import caching
 pytest_plugins = ("pytest_asyncio",)
 
 PRODUTO = {"nome": "Cadeira", "preco": "800.00", "quantidade_em_estoque": 4}
-
-
-@pytest_asyncio.fixture
-async def cache() -> AsyncIterator[None]:
-    client = caching.get_redis_async_client()
-    try:
-        await client.ping()
-    except (RedisConnectionError, OSError):
-        pytest.skip("redis indisponível")
-
-    await client.flushdb()
-    yield
 
 
 async def _entry_keys(redis: Any) -> list[str]:

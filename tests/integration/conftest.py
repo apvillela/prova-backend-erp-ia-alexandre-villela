@@ -3,6 +3,7 @@ from typing import AsyncIterator
 import asyncpg
 import pytest
 import pytest_asyncio
+from redis.exceptions import RedisError
 
 from erp_api import config
 from erp_api import database as db
@@ -24,6 +25,18 @@ async def _reset_redis_client() -> AsyncIterator[None]:
     except Exception:  # noqa: S110
         pass
     caching_client.get_redis_async_client.cache_clear()
+
+
+@pytest_asyncio.fixture
+async def cache() -> AsyncIterator[None]:
+    client = caching_client.get_redis_async_client()
+    try:
+        await client.ping()
+    except (RedisError, OSError):
+        pytest.skip("redis indisponível")
+
+    await client.flushdb()
+    yield
 
 
 @pytest_asyncio.fixture
