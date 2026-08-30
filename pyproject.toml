@@ -25,6 +25,7 @@ dependencies = [
   "alembic",
   "redis",
   "arq",
+  "prometheus-fastapi-instrumentator",
   "pyjwt",
   "bcrypt",
   "httpx",

@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     redis_pass: SecretStr | None = None
     redis_db: int = 0
 
+    # - Metrics -
+    metrics_enabled: bool = True
+
     # - CORS -
     cors_origins: list[str] = ["*"]
 
