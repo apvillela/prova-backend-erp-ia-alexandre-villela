@@ -4,6 +4,8 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from erp_api import config
+from erp_api.caching import get_cached, invalidate_namespace, set_cached
 from erp_api.exceptions import ConflictError, NotFoundError
 from erp_api.services.produtos.models import Produto
 from erp_api.services.produtos.schemas import (
@@ -14,7 +16,11 @@ from erp_api.services.produtos.schemas import (
     ProdutoUpdate,
 )
 
+settings = config.get_settings()
+
 log = logging.getLogger(__name__)
+
+CACHE_NAMESPACE = "produtos"
 
 PRODUTO_NAO_ENCONTRADO = "Produto não encontrado."
 NOME_JA_EXISTE = "Já existe um produto com esse nome."
@@ -29,14 +35,24 @@ async def criar(session: AsyncSession, dados: ProdutoCreate) -> ProdutoResponse:
         await session.rollback()
         raise ConflictError(NOME_JA_EXISTE) from e
     await session.refresh(produto)
+    await invalidate_namespace(CACHE_NAMESPACE)
     return ProdutoResponse.model_validate(produto)
 
 
 async def obter(session: AsyncSession, produto_id: int) -> ProdutoResponse:
+    cache_key = f"id:{produto_id}"
+    if cached := await get_cached(CACHE_NAMESPACE, cache_key):
+        return ProdutoResponse.model_validate_json(cached)
+
     produto = await session.get(Produto, produto_id)
     if produto is None:
         raise NotFoundError(PRODUTO_NAO_ENCONTRADO)
-    return ProdutoResponse.model_validate(produto)
+
+    resposta = ProdutoResponse.model_validate(produto)
+    await set_cached(
+        CACHE_NAMESPACE, cache_key, resposta.model_dump_json(), settings.cache_ttl_produtos
+    )
+    return resposta
 
 
 def _aplicar_filtros(
@@ -54,6 +70,10 @@ def _aplicar_filtros(
 
 
 async def listar(session: AsyncSession, filtros: ProdutoFilters) -> ProdutosPage:
+    cache_key = f"listagem:{filtros.model_dump_json()}"
+    if cached := await get_cached(CACHE_NAMESPACE, cache_key):
+        return ProdutosPage.model_validate_json(cached)
+
     query = _aplicar_filtros(select(Produto), filtros)
 
     total = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
@@ -61,12 +81,16 @@ async def listar(session: AsyncSession, filtros: ProdutoFilters) -> ProdutosPage
     query = query.order_by(Produto.id).offset((filtros.page - 1) * filtros.size).limit(filtros.size)
     produtos = (await session.scalars(query)).all()
 
-    return ProdutosPage(
+    pagina = ProdutosPage(
         items=[ProdutoResponse.model_validate(p) for p in produtos],
         total=total,
         page=filtros.page,
         size=filtros.size,
     )
+    await set_cached(
+        CACHE_NAMESPACE, cache_key, pagina.model_dump_json(), settings.cache_ttl_produtos
+    )
+    return pagina
 
 
 async def atualizar(
@@ -85,6 +109,7 @@ async def atualizar(
         await session.rollback()
         raise ConflictError(NOME_JA_EXISTE) from e
     await session.refresh(produto)
+    await invalidate_namespace(CACHE_NAMESPACE)
     return ProdutoResponse.model_validate(produto)
 
 
@@ -94,3 +119,4 @@ async def excluir(session: AsyncSession, produto_id: int) -> None:
         raise NotFoundError(PRODUTO_NAO_ENCONTRADO)
     await session.delete(produto)
     await session.commit()
+    await invalidate_namespace(CACHE_NAMESPACE)
