@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, getToken, Readiness, setToken } from "./api";
-import { Agente, Consolidado, Painel, Produtos } from "./paginas";
+import { Agente, Resumo, Painel, Produtos } from "./paginas";
 import header from "../assets/header.png";
 import logo from "../assets/ipm_logo.jpeg";
 
-const ABAS = ["painel", "produtos", "agente", "consolidado"] as const;
+const ABAS = ["painel", "produtos", "agente", "resumo"] as const;
 type Aba = (typeof ABAS)[number];
 
 function Login({ aoEntrar }: { aoEntrar: () => void }) {
@@ -141,7 +141,7 @@ export default function App() {
         {aba === "painel" && <Painel readiness={readiness} />}
         {aba === "produtos" && <Produtos />}
         {aba === "agente" && <Agente />}
-        {aba === "consolidado" && <Consolidado />}
+        {aba === "resumo" && <Resumo />}
       </main>
     </>
   );

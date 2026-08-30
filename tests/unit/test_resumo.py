@@ -5,18 +5,18 @@ import pytest
 from httpx import AsyncClient
 from pytest_mock import MockerFixture
 
-from erp_api.services.consolidado import controller, fontes
+from erp_api.services.resumo import controller, fontes
 
 pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.mark.asyncio
-async def test_consolida_as_tres_fontes(
+async def test_resume_as_tres_fontes(
     client: AsyncClient, auth_headers: dict[str, str], mocker: MockerFixture
 ) -> None:
-    mocker.patch.object(controller.settings, "consolidado_latencia_simulada", (0.0, 0.0))
+    mocker.patch.object(controller.settings, "resumo_latencia_simulada", (0.0, 0.0))
 
-    resposta = await client.get("/consolidado/1", params={"produto_id": 2}, headers=auth_headers)
+    resposta = await client.get("/resumo/1", params={"produto_id": 2}, headers=auth_headers)
 
     assert resposta.status_code == 200
     corpo = resposta.json()
@@ -34,11 +34,11 @@ async def test_fonte_com_timeout_degrada_sem_derrubar_resposta(
         await asyncio.sleep(10)
         return {}
 
-    mocker.patch.object(controller.settings, "consolidado_latencia_simulada", (0.0, 0.0))
-    mocker.patch.object(controller.settings, "consolidado_timeout", 0.05)
+    mocker.patch.object(controller.settings, "resumo_latencia_simulada", (0.0, 0.0))
+    mocker.patch.object(controller.settings, "resumo_timeout", 0.05)
     mocker.patch.object(fontes, "estoque_service", lenta)
 
-    resposta = await client.get("/consolidado/1", params={"produto_id": 2}, headers=auth_headers)
+    resposta = await client.get("/resumo/1", params={"produto_id": 2}, headers=auth_headers)
 
     assert resposta.status_code == 200
     corpo = resposta.json()
@@ -69,10 +69,10 @@ async def test_retry_recupera_falha_intermitente(mocker: MockerFixture) -> None:
 
 @pytest.mark.asyncio
 async def test_chamadas_rodam_em_paralelo(mocker: MockerFixture) -> None:
-    mocker.patch.object(controller.settings, "consolidado_latencia_simulada", (0.2, 0.2))
+    mocker.patch.object(controller.settings, "resumo_latencia_simulada", (0.2, 0.2))
 
     inicio = asyncio.get_event_loop().time()
-    await controller.consolidar(cliente_id=1, produto_id=1)
+    await controller.resumir(cliente_id=1, produto_id=1)
     duracao = asyncio.get_event_loop().time() - inicio
 
     assert duracao < 0.5

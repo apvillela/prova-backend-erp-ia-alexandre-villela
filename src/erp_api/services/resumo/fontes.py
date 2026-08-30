@@ -9,7 +9,7 @@ settings = config.get_settings()
 
 
 async def _latencia() -> None:
-    await asyncio.sleep(random.uniform(*settings.consolidado_latencia_simulada))  # noqa: S311
+    await asyncio.sleep(random.uniform(*settings.resumo_latencia_simulada))  # noqa: S311
 
 
 async def estoque_service(produto_id: int) -> dict[str, Any]:

@@ -10,7 +10,7 @@ class FonteResultado(BaseModel):
     erro: str | None = None
 
 
-class ConsolidadoResponse(BaseModel):
+class ResumoResponse(BaseModel):
     completo: bool
     estoque: FonteResultado
     financeiro: FonteResultado

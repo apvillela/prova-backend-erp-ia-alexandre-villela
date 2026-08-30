@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Alerta,
   api,
-  Consolidado as ConsolidadoDto,
+  Resumo as ResumoDto,
   FonteResultado,
   Produto,
   ProdutosPage,
@@ -421,7 +421,7 @@ export function Agente() {
   );
 }
 
-/* ---------------- Consolidado ---------------- */
+/* ---------------- Resumo ---------------- */
 
 function CartaoFonte({ nome, fonte }: { nome: string; fonte: FonteResultado }) {
   return (
@@ -450,10 +450,10 @@ function CartaoFonte({ nome, fonte }: { nome: string; fonte: FonteResultado }) {
   );
 }
 
-export function Consolidado() {
+export function Resumo() {
   const [clienteId, setClienteId] = useState("1");
   const [produtoId, setProdutoId] = useState("1");
-  const [dados, setDados] = useState<ConsolidadoDto | null>(null);
+  const [dados, setDados] = useState<ResumoDto | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, capturar, limpar] = useErro();
 
@@ -462,7 +462,7 @@ export function Consolidado() {
     setCarregando(true);
     try {
       setDados(
-        await api<ConsolidadoDto>(`/consolidado/${clienteId}?produto_id=${produtoId}`),
+        await api<ResumoDto>(`/resumo/${clienteId}?produto_id=${produtoId}`),
       );
       limpar();
     } catch (err) {
@@ -474,7 +474,7 @@ export function Consolidado() {
 
   return (
     <>
-      <h1>Consolidado</h1>
+      <h1>Resumo</h1>
       <p className="subtitulo">
         Consulta as três fontes (estoque, financeiro, cliente) em paralelo com asyncio.gather,
         timeout individual e retry. Se uma fonte falhar, a resposta degrada só naquele campo.

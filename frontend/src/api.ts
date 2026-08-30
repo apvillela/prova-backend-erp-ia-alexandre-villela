@@ -86,7 +86,7 @@ export interface FonteResultado {
   erro: string | null;
 }
 
-export interface Consolidado {
+export interface Resumo {
   completo: boolean;
   estoque: FonteResultado;
   financeiro: FonteResultado;
