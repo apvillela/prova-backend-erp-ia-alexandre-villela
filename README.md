@@ -3,39 +3,33 @@
 API do módulo de Produtos e Estoque de um ERP.
 O serviço expõe o CRUD do domínio, consulta outros módulos (financeiro, clientes)
 e vai responder perguntas em linguagem natural sobre os dados.
-## Stack
 
-- **Python 3.11** por motivos de: versão estável e amplamente suportada pelas libs do ecossistema
-- **FastAPI** padrão pra APIS simples e robustas
-- **Pydantic** imprescindível pra validação de dados, entrada, saída, contratos de API
-- **PostgreSQL** + **SQLAlchemy** (async) — persistência
-- **Redis**  cache de leitura e fila do worker de background
-- **Docker / Docker Compose** uniformidade e facilidade de deploy,
+## Instrução de execução
 
-Ainda em construção
-
-## Estrutura
-
-```
-bin/run.py                 sobe a api com uvicorn
-src/erp_api/
-  config.py                settings lidas do .env
-  main.py                  app fastapi, middlewares e handlers
-  api.py                   junta os routers
-  lifespan.py              checa postgres e redis no start
-  logging_config/          log no console e em arquivo
-  middlewares/             request id e access log
-  exceptions/              erros de domínio e handlers http
-  database/                engine, sessão e base dos models
-  caching/                 cliente redis
-  services/<dominio>/      router, controller e schemas de cada domínio
-migrations/                alembic
-tests/                     testes unitários
-scripts/                   lint, format, test e build da imagem
+```bash
+docker compose up --build
 ```
 
-- domínio novo é uma pasta em `services/`, com router, controller e schemas próprios
-- router cuida só de http, controller tem a regra, database isola o sqlalchemy
-- erro de domínio sobe como exceção e o handler traduz em status code, então o controller não conhece http
-- toda resposta de erro sai como `{"detail": [{"msg": "..."}]}`
-- por enquanto só o health check está implementado: `/health_check` e `/health/readiness`
+Funciona sem configuração: os containers usam o `.env.example` como base. Para customizar (portas, senhas, `JWT_SECRET`), crie um `.env` — ele sobrescreve o example.
+
+O compose sobe Postgres, Redis, as migrações (Alembic, em container próprio antes da API), a API, o worker (arq) e o frontend.
+
+- Frontend: http://localhost:3000 (configurável via `FRONTEND_PORT`)
+- API: http://localhost:8000 — Swagger em http://localhost:8000/docs
+- Login padrão: `lidertecnica` / `password123!` (do `.env.example`)
+
+## Respostas das questões teóricas
+
+### Questão 1
+
+
+## Uso de IA
+
+
+## Extras
+
+- **Rate limit**: `POST /alertas/estoque-baixo/verificar` aceita 3 chamadas por minuto por usuário (contador INCR+EXPIRE no Redis, fail-open se o Redis cair). Estourou, responde `429` com header `Retry-After`. Configurável via `RATE_LIMIT_VERIFICAR_MAX` e `RATE_LIMIT_VERIFICAR_JANELA`.
+- **Ordenação**: `GET /produtos` aceita `ordenar_por` (`nome` | `quantidade_em_estoque` | `data_atualizacao`) e `ordem` (`asc` | `desc`), resolvidos com `ORDER BY` no banco. No front, os cabeçalhos da tabela são clicáveis.
+- **Por baixo dos panos**: cada tela do front tem um painel expansível explicando o fluxo real por trás dela (fila, cache, gather, etc.).
+
+## Links do Portfólio
